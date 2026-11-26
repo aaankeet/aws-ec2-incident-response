@@ -44,7 +44,13 @@ resource "aws_security_group" "ec2_normal" {
   description = "Initial security group for EC2 test instance"
   vpc_id      = data.aws_vpc.default.id
 
-  # No inbound rules
+  # **ALLOW SSH FROM OUR KALI VM ONLY**
+  ingress = {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.attacker_cidr]
+  }
 
   # Allow outbound traffic initially
   egress {
@@ -83,8 +89,8 @@ resource "aws_instance" "test_instance" {
   vpc_security_group_ids = [
     aws_security_group.ec2_normal.id
   ]
-
-  associate_public_ip_address = false
+  # Assign Public IP so we can attack EC2 Instance from our Kali VM and generate some telemetry
+  associate_public_ip_address = true
 
   monitoring = false
 
