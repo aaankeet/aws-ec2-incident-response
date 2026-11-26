@@ -45,7 +45,8 @@ resource "aws_security_group" "ec2_normal" {
   vpc_id      = data.aws_vpc.default.id
 
   # **ALLOW SSH FROM OUR KALI VM ONLY**
-  ingress = {
+  ingress {
+    description = "Temporary SSH from Kali VM"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -79,6 +80,15 @@ resource "aws_security_group" "ec2_quarantine" {
   }
 }
 
+resource "aws_key_pair" "kali" {
+  key_name   = "${var.project_name}-kali-key"
+  public_key = file("${path.module}/kali-ec2.pub")
+
+  tags = {
+    Name = "${var.project_name}-kali-key"
+  }
+}
+
 # EC2 test instance
 resource "aws_instance" "test_instance" {
   ami           = data.aws_ami.amazon_linux.id
@@ -91,6 +101,7 @@ resource "aws_instance" "test_instance" {
   ]
   # Assign Public IP so we can attack EC2 Instance from our Kali VM and generate some telemetry
   associate_public_ip_address = true
+  key_name                    = aws_key_pair.kali.key_name
 
   monitoring = false
 
