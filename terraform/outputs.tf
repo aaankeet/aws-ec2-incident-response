@@ -23,3 +23,8 @@ output "ec2_ami_id" {
   description = "Amazon Linux 2023 AMI ID"
   value       = data.aws_ami.amazon_linux.id
 }
+
+output "ec2_public_ip" {
+  description = "EC2 Public IP"
+  value = aws_instance.test_instance.public_ip
+}
