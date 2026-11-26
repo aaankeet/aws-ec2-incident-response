@@ -22,3 +22,13 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "attacker_cidr" {
+  description = "Kali Linux virtual machine Public IPv4 CIDR"
+  type        = string
+
+  validation {
+    condition     = can(cidrnetmask(var.attacker_cidr))
+    error_message = "Provide a valid IPv4 CIDR, such as 106.0.113.69/32"
+  }
+}
