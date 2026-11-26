@@ -1,4 +1,4 @@
-# IAM Instance role for cloudwatch-agent
+# IAM Role for the Cloudwatch-Agent running on EC2 Instance.
 resource "aws_iam_role" "ec2_cloudwatch_role" {
   name = "${var.project_name}-ec2-cloudwatch-role"
 
@@ -15,10 +15,13 @@ resource "aws_iam_role" "ec2_cloudwatch_role" {
   })
 }
 
-# Permission Policy attached to the ec2 cloudwatch role
+/*
+This policy allows the agent to create log streams and publish events to the specified log group.
+It does not grant broad CloudWatch or EC2 permissions.
+*/
 resource "aws_iam_role_policy" "ec2_cloudwatch_policy" {
   name = "${var.project_name}-ec2-cloudwatch-logs"
-  role =  aws_iam_role.ec2_cloudwatch_role.id
+  role = aws_iam_role.ec2_cloudwatch_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -29,7 +32,7 @@ resource "aws_iam_role_policy" "ec2_cloudwatch_policy" {
         "logs:PutLogEvents",
         "logs:DescribeLogStreams"
       ]
-      Reource = "arn:aws:logs:ap-south-1:*:log-group:/ec2/incident-response-lab/secure:log-stream:*"
+      Resource = "arn:aws:logs:ap-south-1:*:log-group:/ec2/incident-response-lab/secure:log-stream:*"
     }]
   })
 }
