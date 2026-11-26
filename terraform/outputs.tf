@@ -26,5 +26,5 @@ output "ec2_ami_id" {
 
 output "ec2_public_ip" {
   description = "EC2 Public IP"
-  value = aws_instance.test_instance.public_ip
+  value       = aws_instance.test_instance.public_ip
 }
