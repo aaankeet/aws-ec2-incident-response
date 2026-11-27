@@ -102,6 +102,8 @@ resource "aws_instance" "test_instance" {
   # Assign Public IP so we can attack EC2 Instance from our Kali VM and generate some telemetry
   associate_public_ip_address = true
   key_name                    = aws_key_pair.kali.key_name
+  # Attach the IAM Instance Profile to the EC2 Instance
+  iam_instance_profile = aws_iam_instance_profile.ec2_cloudwatch_profile.name
 
   monitoring = false
 
