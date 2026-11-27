@@ -68,7 +68,7 @@ resource "aws_cloudwatch_log_group" "ssh_detection_lambda_logs" {
 }
 # Lambda Function to detect SSH Authentication Logs
 resource "aws_lambda_function" "ssh_detector_lambda" {
-  function_name = "/aws/lambda/${var.project_name}-ssh-authentication-detection"
+  function_name = "${var.project_name}-ssh-authentication-detection"
   role          = aws_iam_role.lambda_execution_role.arn
 
   filename         = "${path.module}/scripts/detection.zip"
