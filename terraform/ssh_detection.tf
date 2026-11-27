@@ -1,3 +1,10 @@
+# Package the python code
+data "archive_file" "ssh_detection_package" {
+  type        = "zip"
+  source_file = "${path.module}/scripts/detection.py"
+  output_path = "${path.module}/scripts/detection.zip"
+}
+
 # Lambda execution role
 resource "aws_iam_role" "lambda_execution_role" {
   name = "${var.project_name}-lambda-role"
