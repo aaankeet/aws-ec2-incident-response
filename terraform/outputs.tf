@@ -28,3 +28,7 @@ output "ec2_public_ip" {
   description = "EC2 Public IP"
   value       = aws_instance.test_instance.public_ip
 }
+
+output "security_alerts_topic_arn" {
+  value = aws_sns_topic.security_alerts.arn
+}
