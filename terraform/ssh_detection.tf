@@ -16,7 +16,7 @@ resource "aws_iam_role" "lambda_execution_role" {
 # Lambda Execution role permission policy
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "${var.project_name}-lambda-policy"
-  role = aws_iam_role.lambda_execution_role.arn
+  role = aws_iam_role.lambda_execution_role.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -63,12 +63,12 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 # cloudwatch log group for lambda detection runtime environment
 resource "aws_cloudwatch_log_group" "ssh_detection_lambda_logs" {
-  name              = "aws/lambda/ssh-authentication-detection"
+  name              = "/aws/lambda/${var.project_name}-ssh-authentication-detection"
   retention_in_days = 7
 }
 # Lambda Function to detect SSH Authentication Logs
 resource "aws_lambda_function" "ssh_detector_lambda" {
-  function_name = "${var.project_name}-ssh-authentication-detection"
+  function_name = "/aws/lambda/${var.project_name}-ssh-authentication-detection"
   role          = aws_iam_role.lambda_execution_role.arn
 
   filename         = "${path.module}/scripts/detection.zip"
@@ -146,7 +146,7 @@ resource "aws_dynamodb_table" "ssh_auth_events" {
 resource "aws_dynamodb_table" "ec2_security_incidents" {
   name         = "${var.project_name}-ec2-security-incidents"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "incident_id "
+  hash_key     = "incident_id"
 
   attribute {
     name = "incident_id"
