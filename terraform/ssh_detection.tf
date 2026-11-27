@@ -21,72 +21,72 @@ resource "aws_iam_role_policy" "lambda_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-    {
-      Sid = "CloudWatchLogsLambdaWrite"
-      Effect = "Allow"
-      Action = [
-        "logs:PutLogEvents",
-        "logs:CreateLogStream"
-      ]
-      Resource = "${aws_cloudwatch_log_group.ssh_detection_lambda_logs.arn}:*"
-    },
-    # Permission to Write to SSH Auth Events table
-    {
-      Sid = "DynamoDBSSHAuthEventsWrite"
-      Effect = "Allow"
-      Action = [
-        "dynamodb:PutItem",
-        "dynamodb:Query"
-      ]
-      Resource = aws_dynamodb_table.ssh_auth_events.arn
+      {
+        Sid    = "CloudWatchLogsLambdaWrite"
+        Effect = "Allow"
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream"
+        ]
+        Resource = "${aws_cloudwatch_log_group.ssh_detection_lambda_logs.arn}:*"
+      },
+      # Permission to Write to SSH Auth Events table
+      {
+        Sid    = "DynamoDBSSHAuthEventsWrite"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:Query"
+        ]
+        Resource = aws_dynamodb_table.ssh_auth_events.arn
 
-    },
-    # Permission to Write to EC2 Security Incidents table
-    {
-      Sid = "DynamoDBEC2SecurityIncidentWrite"
-      Effect = "Allow"
-      Action = [
-        "dynamodb:PutItem",
-      ]
-      Resource = aws_dynamodb_table.ec2_security_incidents.arn
-    },
-    # Permission to Publish Notification
-    {
-      Sid = "SNSPublishIncidents"
-      Effect = "Allow",
-      Action = "sns:Publish"
-      Resource = aws_sns_topic.security_alerts.arn
-    }
+      },
+      # Permission to Write to EC2 Security Incidents table
+      {
+        Sid    = "DynamoDBEC2SecurityIncidentWrite"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+        ]
+        Resource = aws_dynamodb_table.ec2_security_incidents.arn
+      },
+      # Permission to Publish Notification
+      {
+        Sid      = "SNSPublishIncidents"
+        Effect   = "Allow",
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.security_alerts.arn
+      }
     ]
   })
 }
 
 # cloudwatch log group for lambda detection runtime environment
 resource "aws_cloudwatch_log_group" "ssh_detection_lambda_logs" {
-  name = "aws/lambda/ssh-authentication-detection"
+  name              = "aws/lambda/ssh-authentication-detection"
   retention_in_days = 7
 }
 # Lambda Function to detect SSH Authentication Logs
 resource "aws_lambda_function" "ssh_detector_lambda" {
   function_name = "${var.project_name}-ssh-authentication-detection"
-  role = aws_iam_role.lambda_execution_role.arn
+  role          = aws_iam_role.lambda_execution_role.arn
 
-  filename = "${path.module}/scripts/detection.zip"
+  filename         = "${path.module}/scripts/detection.zip"
   source_code_hash = filebase64sha256("${path.module}/scripts/detection.zip")
 
   handler = "detection.lambda_handler"
   runtime = "python3.12"
 
-  timeout = 30
+  timeout     = 30
   memory_size = 128
 
   environment {
     variables = {
       FAILURE_EVENTS_TABLE = aws_dynamodb_table.ssh_auth_events.name
-      INCIDENTS_TABLE = aws_dynamodb_table.ec2_security_incidents.name
-      SNS_TOPIC_ARN = aws_sns_topic.security_alerts.arn
-      FAILURE_THRESHOLD = "5"
-      WINDOW_SECONDS = "300"
+      INCIDENTS_TABLE      = aws_dynamodb_table.ec2_security_incidents.name
+      SNS_TOPIC_ARN        = aws_sns_topic.security_alerts.arn
+      FAILURE_THRESHOLD    = "5"
+      WINDOW_SECONDS       = "300"
     }
   }
   depends_on = [
@@ -96,10 +96,10 @@ resource "aws_lambda_function" "ssh_detector_lambda" {
 }
 # Allow Cloudwatch Logs to Invoke Lambda
 resource "aws_lambda_permission" "allow_cloudwatch_logs" {
-  statement_id = "AllowExecutionFromCloudWatchLogs"
-  action = "lambda:InvokeFunction"
+  statement_id  = "AllowExecutionFromCloudWatchLogs"
+  action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.ssh_detector_lambda.function_name
-  principal = "logs.amazonaws.com"
+  principal     = "logs.amazonaws.com"
 
   source_arn = "${aws_cloudwatch_log_group.ec2_secure_logs.arn}:*"
 }
@@ -110,8 +110,8 @@ resource "aws_lambda_permission" "allow_cloudwatch_logs" {
  and sends them to lambda function for evaluation
 */
 resource "aws_cloudwatch_log_subscription_filter" "log_filter" {
-  name = "${var.project_name}-cloudwatch-subscription-filter"
-  log_group_name = aws_cloudwatch_log_group.ec2_secure_logs.name
+  name            = "${var.project_name}-cloudwatch-subscription-filter"
+  log_group_name  = aws_cloudwatch_log_group.ec2_secure_logs.name
   destination_arn = aws_lambda_function.ssh_detector_lambda.arn
 
   filter_pattern = "?Failed ?Invalid ?authentication"
@@ -124,10 +124,10 @@ resource "aws_cloudwatch_log_subscription_filter" "log_filter" {
 
 # DynamoDB Table for Recording SSH Failed Authentication
 resource "aws_dynamodb_table" "ssh_auth_events" {
-  name = "${var.project_name}-ssh-auth-events"
+  name         = "${var.project_name}-ssh-auth-events"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "source_ip"
-  range_key = "event_key"
+  hash_key     = "source_ip"
+  range_key    = "event_key"
 
   attribute {
     name = "source_ip"
@@ -139,14 +139,14 @@ resource "aws_dynamodb_table" "ssh_auth_events" {
   }
   ttl {
     attribute_name = "expires_at"
-    enabled = true
+    enabled        = true
   }
 }
 # DynamoDB Table for Recording EC2 Security Incidents
 resource "aws_dynamodb_table" "ec2_security_incidents" {
-  name = "${var.project_name}-ec2-security-incidents"
+  name         = "${var.project_name}-ec2-security-incidents"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "incident_id "
+  hash_key     = "incident_id "
 
   attribute {
     name = "incident_id"
@@ -154,7 +154,7 @@ resource "aws_dynamodb_table" "ec2_security_incidents" {
   }
   ttl {
     attribute_name = "expires_at"
-    enabled = true
+    enabled        = true
   }
 }
 
